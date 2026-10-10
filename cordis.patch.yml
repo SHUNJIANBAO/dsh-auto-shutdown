@@ -1,0 +1,18 @@
+# dsh-auto-shutdown:对话回合结束后按平台自动关机(Windows 可取消)。
+#
+# 入口:
+#   - 会话输入框下方的 composer dock(conversation.composer.dock)电源图标按钮
+#   - 人体命令 /shutdown-auto on|off|status(无 UI 环境与排障用)
+#   - 客户端经 /api/dsh-auto-shutdown/{state,arm,cancel} 与 Host 通信
+#
+# 行为:全局开关,默认关闭。开启后任意根会话批次全部转为 idle 且无 agent/error 时,
+#      进入可取消倒计时(countdownSec + marginSec),倒计时期间开新任务自动 shutdown /a
+#      并保持开关开启。状态持久化到 ~/.dsh/auto-shutdown-state.json(跨会话与重启)。
+#         Windows    : shutdown.exe /s /t <countdownSec+marginSec>(shutdown.exe /a 取消)
+#         macOS/Linux: /sbin/shutdown -h now(不可逆,UI 会明确提示)
+#
+# 安装: 由官方 plugin_manager 的 install_bundle 安装到当前 profile,不要手写
+#      profile 的 package.json / cordis.patch.yml,也不要在 profile 目录跑 pnpm。
+- insert:
+    - id: auto-shutdown
+      name: 'dsh-auto-shutdown'

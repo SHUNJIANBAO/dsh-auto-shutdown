@@ -1,0 +1,33 @@
+{
+  "name": "dsh-auto-shutdown",
+  "version": "1.0.0",
+  "description": "全局自动关机开关:开启后任意对话回合结束即进入可取消倒计时,倒计时结束执行平台关机命令(Windows shutdown.exe /s /t N /a 可取消;macOS/Linux /sbin/shutdown -h now 不可取消)。状态由 Host 持久化在 ~/.dsh/auto-shutdown-state.json,跨会话与重启保留;UI 走 conversation.composer.dock,客户端经 /api/dsh-auto-shutdown/* 与 Host 通信。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "auto-shutdown",
+    "lifecycle"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

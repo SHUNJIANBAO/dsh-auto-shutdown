@@ -1,0 +1,3 @@
+# 保持字节原样：禁用一切行尾转换。
+# Windows 全局 core.autocrlf=true 时，git 会在 add/checkout 阶段改写行尾。
+* -text
