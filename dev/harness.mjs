@@ -454,7 +454,7 @@ R.provideAll();
 const disposeRestart = apply(R.ctx, {}); // ← 模拟"重新打开 DSH"：新进程挂载
 check('E1 跨进程重启 → 开关自动关闭', R.state().enabled === false, String(R.state().enabled));
 const logDeltaE = readSandboxLog().slice(logBeforeE);
-check('E2 重置有留痕', /启动重置/.test(logDeltaE), logDeltaE.trim().split('\n').slice(-2).join(' | '));
+check('E2 启动留痕：不继承上次的开启状态', /不继承上次的开启状态/.test(logDeltaE), logDeltaE.trim().split('\n').slice(-2).join(' | '));
 const persistedE = JSON.parse(fs.readFileSync(STATE, 'utf8'));
 check('E3 状态文件被改写成"关闭 + 本进程 pid"',
   persistedE.enabled === false && persistedE.pid === process.pid, JSON.stringify(persistedE));

@@ -1,7 +1,7 @@
 {
   "name": "dsh-auto-shutdown",
   "version": "1.0.0",
-  "description": "全局自动关机开关:开启后任意对话回合结束即进入可取消倒计时,倒计时结束执行平台关机命令(Windows shutdown.exe /s /t N /a 可取消;macOS/Linux /sbin/shutdown -h now 不可取消)。状态由 Host 记录在 ~/.dsh/auto-shutdown-state.json,仅在同一个宿主进程内沿用(重新打开 DSH 一律从关闭开始);UI 走 conversation.composer.dock,客户端经 /api/dsh-auto-shutdown/* 与 Host 通信。",
+  "description": "全局自动关机开关:开启后任意对话回合结束即进入可取消倒计时,倒计时结束执行平台关机命令(Windows shutdown.exe /s /t N /a 可取消;macOS/Linux /sbin/shutdown -h now 不可取消)。状态由 Host 记录在 ~/.dsh/auto-shutdown-state.json,但开关只对当前这一次运行有效:重新打开 DSH 一律从关闭开始;UI 走 conversation.composer.dock,客户端经 /api/dsh-auto-shutdown/* 与 Host 通信。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
