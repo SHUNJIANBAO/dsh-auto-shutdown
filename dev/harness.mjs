@@ -5,11 +5,12 @@
 //   2. os.homedir() 指向临时沙箱目录，绝不写真实 ~/.dsh；
 //   3. 末尾自检 "production log untouched"。
 //
-// 覆盖四组：
+// 覆盖五组：
 //   A. 正常时序（服务在 apply 前就绪）—— 状态机语义
 //   B. 冷启动竞态（apply 时服务全缺，之后才注入）—— 2026-10-01 客户端 404 的回归
 //   C. 调用 ctx.setTimeout 抛错（timer fiber 失效）—— 2026-10-08「状态正常但不关机」的回归
 //   D. **读取** ctx.setTimeout 就抛错 —— 2026-10-09「UI 显示不可用 HTTP 404」的回归
+//   E. 跨进程重启不继承开关 —— 2026-10-16「每次打开 DSH 开关又是开着的」的回归
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -440,6 +441,35 @@ check('D10 one-shot fallback logged with real error',
   /ctx\.setTimeout 不可用\(/.test(logDeltaD2), logDeltaD2.trim().split('\n').slice(-3).join(' | '));
 if (disposePoison) disposePoison();
 await sleep(20);
+
+// ══════════════════════════════════════════════════════════════════════
+// E. 跨进程重启不继承开关（2026-10-16 反馈：每次打开 DSH 都该是"关闭"）
+//   旧实现把 enabled 当成粘性偏好，机器重启/客户端重开后又亮起，用户得手动关。
+//   现在状态文件额外记 pid：只有同一进程内的再次挂载才沿用，换进程一律从关闭开始。
+// ══════════════════════════════════════════════════════════════════════
+const logBeforeE = readSandboxLog().length;
+fs.writeFileSync(STATE, JSON.stringify({ enabled: true }, null, 2), 'utf8'); // 上一进程遗留（旧格式，无 pid）
+const R = createWorld();
+R.provideAll();
+const disposeRestart = apply(R.ctx, {}); // ← 模拟"重新打开 DSH"：新进程挂载
+check('E1 跨进程重启 → 开关自动关闭', R.state().enabled === false, String(R.state().enabled));
+const logDeltaE = readSandboxLog().slice(logBeforeE);
+check('E2 重置有留痕', /启动重置/.test(logDeltaE), logDeltaE.trim().split('\n').slice(-2).join(' | '));
+const persistedE = JSON.parse(fs.readFileSync(STATE, 'utf8'));
+check('E3 状态文件被改写成"关闭 + 本进程 pid"',
+  persistedE.enabled === false && persistedE.pid === process.pid, JSON.stringify(persistedE));
+
+// 同进程内再次挂载（补丁热重载 / 第二个窗口）仍沿用文件里的开关，不打断已开启的模式
+R.hit('POST', '/arm');
+const remounted = JSON.parse(fs.readFileSync(STATE, 'utf8'));
+disposeRestart();
+const R2 = createWorld();
+R2.provideAll();
+const disposeReload = apply(R2.ctx, {});
+check('E4 同进程热重载沿用开关（不被重置打断）', R2.state().enabled === true,
+  `file=${JSON.stringify(remounted)} state=${R2.state().enabled}`);
+disposeReload();
+await R2.pump();
 
 // ══════════════════════════════════════════════════════════════════════
 // 收尾自检

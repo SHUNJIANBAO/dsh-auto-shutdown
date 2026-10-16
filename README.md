@@ -16,7 +16,7 @@
 
 **行为契约**：
 
-- **全局开关，默认关闭**。状态持久化在 `~/.dsh/auto-shutdown-state.json`，**跨会话、跨重启保留**。
+- **全局开关，默认关闭**。状态记录在 `~/.dsh/auto-shutdown-state.json`，但**只在同一次运行的宿主进程内沿用**（补丁热重载 / 第二个窗口）；**重新打开 DSH 一律从「关闭」开始**，不会继承上次遗留的开启状态。
 - 开启后，当所有根会话批次转为空闲、且没有 agent 报错、且 `jobs` 里没有 running/stopping
   （后台任务计入等待），开始静默窗口确认（`idleGraceSec`，默认 3s，防止多会话收尾抖动），
   然后进入倒计时（`countdownSec` + `marginSec`，默认 60 + 5 秒）。
@@ -42,7 +42,7 @@ dsh plugin --profile <profile> add /abs/path/to/dsh-auto-shutdown
 ## 验收（**不要真关机**）
 
 ```sh
-node dev/harness.mjs   # 57 项断言
+node dev/harness.mjs   # 61 项断言
 ```
 
 harness 是**完全沙箱化**的：`subprocess.spawn` 被完整 mock（只记录 argv，**绝不真正执行关机命令**）、
@@ -93,7 +93,7 @@ dsh-auto-shutdown/
 │   ├── index.js          # 宿主半：开关状态机、静默窗口、倒计时、HTTP 路由、命令
 │   └── client.js         # 浏览器半：composer dock 的电源图标 + 轮询 /api/dsh-auto-shutdown/*
 └── dev/
-    └── harness.mjs       # 57 项沙箱化回归（A 正常时序 / B 冷启动竞态 / C ctx.setTimeout 调用抛错 / D 读取即抛错）
+    └── harness.mjs       # 61 项沙箱化回归（A 正常时序 / B 冷启动竞态 / C ctx.setTimeout 调用抛错 / D 读取即抛错 / E 跨进程不继承开关）
 ```
 
 **宿主入口铁律**（`lib/index.js` 里已经这么做，改代码时别破坏）：`ctx.setTimeout` / `ctx.on` /

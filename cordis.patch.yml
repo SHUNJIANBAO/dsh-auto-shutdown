@@ -7,7 +7,7 @@
 #
 # 行为:全局开关,默认关闭。开启后任意根会话批次全部转为 idle 且无 agent/error 时,
 #      进入可取消倒计时(countdownSec + marginSec),倒计时期间开新任务自动 shutdown /a
-#      并保持开关开启。状态持久化到 ~/.dsh/auto-shutdown-state.json(跨会话与重启)。
+#      并保持开关开启。状态记录到 ~/.dsh/auto-shutdown-state.json(仅同一进程内沿用,重新打开 DSH 从关闭开始)。
 #         Windows    : shutdown.exe /s /t <countdownSec+marginSec>(shutdown.exe /a 取消)
 #         macOS/Linux: /sbin/shutdown -h now(不可逆,UI 会明确提示)
 #
